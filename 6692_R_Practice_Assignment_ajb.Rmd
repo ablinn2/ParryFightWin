@@ -1,0 +1,69 @@
+---
+title: "R Practice Assignment"
+author: "Andrew Blinn"
+date: "1/26/2022"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+---
+
+# Setup markdown to show code (5.)
+```{r setup}
+
+# default setup line to include all code in the knitted markup file
+knitr::opts_chunk$set(echo = TRUE)
+
+# load in necessary libraries
+library(tidyverse) # for plotting and piping
+library(readxl) # for reading in a .xlsx data file
+
+```
+
+
+# Import data (1.)
+```{r upload}
+
+# my data comes from a data repository available at http://data.iutahepscor.org
+# lots of metadata including column name descriptions and units, so skip the first 106 lines
+my.data <- read_excel("~/R/CURB/RBC/climate/RB_ARBR_C_SourceID_1_QC_0_Year_2021.xlsx", skip = 106)
+
+```
+
+# Set timezone and rename column to reflect change (2. and 4.)
+```{r rename}
+
+# R read the date/time columns in as POSIXct automatically, but incorrectly assigned the timezone
+attr(my.data$LocalDateTime, "tzone") <- "MST" # UTC offset is -7 year-round, so use MST (no daylight savings)
+
+# rename LocalDateTime column to a format that matches the UTC DateTime using easy dplyr function
+my.data <- my.data %>% rename(DateTimeMST = LocalDateTime) # NewName = OldName
+
+```
+
+# Example of a loop (3.)
+```{r cleanup}
+
+# PARIn_Avg values are messy at night - reassigns low values to zero
+for(i in 1:nrow(my.data)){
+  if(my.data$PARIn_Avg[i]<0.01){ # 0.01 is a reasonable but arbitrary cutoff value based on quick inspection
+    my.data$PARIn_Avg[i] <- 0
+  }
+}
+
+```
+
+# Plot cleaned data (4.)
+```{r plot}
+
+# tell ggplot the source of data and specify x and y variables to plot
+ggplot(data = my.data, aes(x = DateTimeMST, y = PARIn_Avg)) +
+  geom_line() + # specify type of plot
+  labs(title = "Incoming PAR at Red Buute Creek - 2021", # provide descriptive title and axis labels
+       x = "",
+       y = "PAR") +
+  scale_x_datetime(date_labels = "%B") + # reformat x axis tick mark labels
+  theme(panel.grid.major = element_blank(), # remove gridlines
+    panel.grid.minor = element_blank())
+
+```
