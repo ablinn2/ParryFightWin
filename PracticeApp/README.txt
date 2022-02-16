@@ -1,0 +1,1 @@
+A practice app that currently cannot connect to files referenced in "books". Debugging planned for this week during office hours. I successfully changed the header and chose a different color scheme to allow for a larger number of unique colors in the word cloud.
